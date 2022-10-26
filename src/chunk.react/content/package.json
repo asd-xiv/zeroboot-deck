@@ -1,0 +1,10 @@
+{
+  "name": "<%= packageName %>",
+  "description": "",
+  "repository": "git://github.com/<%= packageName %>.git",
+  "version": "0.1.0",
+  "license": "<%= licence ? license.type : '' %>",
+  "main": "src/index.js",
+  "dependencies": {},
+  "devDependencies": {}
+}

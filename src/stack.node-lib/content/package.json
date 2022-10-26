@@ -1,0 +1,89 @@
+{
+  "name": "{{name}}",
+  "description": "{{description}}",
+  "version": "0.1.0",
+  "license": "{{license.type}}",
+  "homepage": "https://github.com/{{name}}",
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/{{name}}.git"
+  },
+  "bugs": {
+    "url": "https://github.com/{{name}}/issues"
+  },
+  "author": {
+    "name": "Andrei Dumitrescu",
+    "url": "https://github.com/andreidmt"
+  },
+  "type": "module",
+  <% if (typescript === "jsdoc") { %>
+  "exports": "./src/index.js",
+  <% } else { %>
+  "exports": "./dist/index.js",
+  <% } %>
+  "sideEffects": false,
+  "directories": {
+    "bin": "bin",
+    "lib": "src"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "bin": {
+    "zeroboot": "bin/zeroboot.js"
+  },
+  "scripts": {
+    "----UTIL": "",
+    "prepare": "git config --local core.hooksPath .githooks",
+    "setup": "npm ci --also=dev",
+    "update": "ncu --interactive",
+    "postupdate": "npm audit fix",
+    "format": "prettier --write --prose-wrap=always .",
+    "----LINT": "",
+    "lint.js": "eslint lib",
+    "lint.md": "markdownlint '*.md' 'src/**/*.md'",
+    "lint": "npm run lint.js && npm run lint.md",
+    "typecheck": "tsc --pretty --noEmit",
+    "----TEST": "",
+    "test": "tape -r swc-register 'src/**/*.test.js' 'src/*.test.js' | tap-nirvana",
+    "tdd": "nodemon --watch src --exec 'npm test'",
+    "coverage": "c8 npm test && c8 report --reporter=text-lcov | coveralls",
+    "----BUILD": "",
+    "build.js": "swc src --out-dir dist --config module.type=es6",
+    "build.types": "tsc --outDir dist --project tsconfig.build-types.json",
+    "prebuild": "rm -rf dist",
+    "build": "npm run build.js",
+    "release": "semantic-release",
+    "----DEV": "",
+    "start": "swc src --watch --out-dir dist/esm --config module.type=es6"
+  },
+  "dependencies": {
+    "@swc/helpers": "^0.4.12",
+    "rambda": "^7.3.0"
+  },
+  "devDependencies": {
+    "@asd14/eslint-config": "^8.1.0",
+    "@commitlint/cli": "^17.1.2",
+    "@commitlint/config-conventional": "^17.1.0",
+    "@semantic-release/changelog": "^6.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "^1.3.10",
+    "c8": "^7.12.0",
+    "eslint": "^8.26.0",
+    "lint-staged": "^13.0.3",
+    "markdownlint-cli": "^0.32.2",
+    "npm-check-updates": "^16.3.15",
+    "prettier": "^2.7.1",
+    "semantic-release": "^19.0.5",
+    "tap-nirvana": "^1.1.0",
+    "tape": "^5.6.1",
+    "typescript": "^4.8.4"
+  },
+  "engines": {
+    "node": ">=16",
+    "npm": ">=8"
+  }
+}

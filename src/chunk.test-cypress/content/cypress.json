@@ -1,0 +1,8 @@
+{
+  "pluginsFile": "src/core.plugins/plugins.ts",
+  "supportFile": "src/core.support/support.ts",
+  "fixturesFolder": "src/core.fixtures",
+  "integrationFolder": "src",
+  "testFiles": "**/*.{feature,features}",
+  "ignoreTestFiles": "*.ts"
+}

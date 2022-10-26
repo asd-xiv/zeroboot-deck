@@ -1,0 +1,15 @@
+.ladle-layout {
+  --unit: 24px;
+}
+
+.ladle-main {
+  padding: 2em 3em;
+}
+
+.ladle-aside {
+  min-width: 23em;
+}
+
+.ladle-aside > ul > li[aria-expanded="true"] > div {
+  font-weight: bold;
+}

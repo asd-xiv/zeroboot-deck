@@ -1,0 +1,275 @@
+#
+# CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+
+version: 2.1
+
+#
+# Orbs - https://circleci.com/docs/2.0/orb-concepts/#quick-start
+#
+# Shareable packages of configuration elements, including jobs commands,
+# and executors
+#
+
+orbs:
+  slack: circleci/slack@4.6.0
+
+#
+# Executors - https://circleci.com/docs/2.0/executor-intro/
+#
+# The underlying technology or environment in which to run a job
+#
+
+executors:
+  gitleaks:
+    docker:
+      - image: zricethezav/gitleaks:latest
+  node:
+    docker:
+      - image: cimg/node:lts
+  aws:
+    docker:
+      - image: amazon/aws-cli:latest
+
+#
+# Jobs - https://circleci.com/docs/2.0/configuration-reference/#jobs
+#
+# Atomic parts of the pipeline that will be composed and configured in one or
+# more Workflows
+#
+
+jobs:
+  detect-secrets:
+    executor: gitleaks
+    working_directory: &JOB_WORKING_DIR "~/uikit"
+    steps:
+      - checkout
+      - run:
+          name: "[gitleaks] Detect secrets in repository history"
+          command: |
+            gitleaks detect --redact --verbose --config .circleci/gitleaks.toml
+
+  setup:
+    executor: node
+    working_directory: *JOB_WORKING_DIR
+    steps:
+      - checkout
+      - restore_cache:
+          name: '[circleci] Restore cached "node_modules" folder'
+          keys:
+            - &CACHE_KEY_NODE_MODULES 'uikit-v4-{{ arch }}-{{ checksum
+              "package-lock.json" }}'
+            - "uikit-v4-"
+      - run:
+          name: "[bash] Prepare auth token for R/W GitHub private NPM packages"
+          command: |
+            echo "//npm.pkg.github.com/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+      - run:
+          name: "[npm]: Install packages"
+          command: |
+            npm -v
+            npm install --no-audit
+      - save_cache:
+          paths:
+            - node_modules
+          key: *CACHE_KEY_NODE_MODULES
+      - persist_to_workspace:
+          root: &WORKSPACE_ROOT "~/"
+          paths:
+            - uikit
+            - .npmrc
+
+  test:
+    executor: node
+    working_directory: *JOB_WORKING_DIR
+    steps:
+      - attach_workspace:
+          at: *WORKSPACE_ROOT
+      - run:
+          name: "[typescript]: Typecheck"
+          command: |
+            npm run typecheck
+      - run:
+          name: "[eslint]: Lint"
+          command: |
+            npm run lint
+      - run:
+          name: "[jest] Unit test with coverage check"
+          command: |
+            npm run coverage
+
+  submit-coverage:
+    executor: node
+    working_directory: *JOB_WORKING_DIR
+    steps:
+      - attach_workspace:
+          at: *WORKSPACE_ROOT
+      - run:
+          name: "[curl] Install Code Climate test-reporter"
+          command: |
+            curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+            chmod +x ./cc-test-reporter
+      - run:
+          name: "[jest, cc-test-reporter]: Submit test coverage to Code Climate"
+          command: |
+            ./cc-test-reporter before-build
+            npm run coverage
+            ./cc-test-reporter after-build --coverage-input-type lcov --exit-code $?
+
+  release-npm:
+    executor: node
+    working_directory: *JOB_WORKING_DIR
+    steps:
+      - attach_workspace:
+          at: *WORKSPACE_ROOT
+      - run:
+          name: "[swc]: Compile application"
+          command: |
+            npm run build
+      - run:
+          name:
+            "[semantic-release]: Update version, generate release, publish npm
+            package"
+          command: |
+            npm run release
+
+  build-ladle:
+    executor: node
+    working_directory: *JOB_WORKING_DIR
+    steps:
+      - attach_workspace:
+          at: *WORKSPACE_ROOT
+      - run:
+          name: "[ladle]: Compile Ladle application"
+          command: |
+            npm run build.ladle
+      - persist_to_workspace:
+          root: *WORKSPACE_ROOT
+          paths:
+            - uikit/dist-ladle
+
+  deploy-ladle:
+    executor: aws
+    working_directory: *JOB_WORKING_DIR
+    steps:
+      - run:
+          name: "[yum] Install packages missing in 'amazon/aws-cli' image"
+          command: |
+            # tar, gzip: required for unpacking workspace data
+            yum install -y tar gzip
+      - attach_workspace:
+          at: *WORKSPACE_ROOT
+      - run:
+          name: "[bash]: Generate Whitelist Policy"
+          command: |
+            ./.circleci/aws/s3_generate-whitelist-policy
+      - run:
+          name: "[aws]: Update Bucket Policy"
+          command: |
+            aws s3api put-bucket-policy \
+              --bucket ${AWS_S3_BUCKET_NAME} \
+              --policy file://./s3-policy.json
+      - run:
+          name: "[aws]: Upload compiled Storybook to S3"
+          command: |
+            # cache everything for 1 week, all assets have hashed names
+            aws s3 sync \
+              dist-ladle \
+              s3://${AWS_S3_BUCKET_NAME} \
+              --delete \
+              --cache-control "max-age=86400" \
+              --exclude index.html
+            # dont cache entry point
+            aws s3 sync \
+              dist-ladle \
+              s3://${AWS_S3_BUCKET_NAME} \
+              --cache-control "no-cache" \
+
+#
+# Workflows - https://circleci.com/docs/2.0/workflows/
+#
+# Treat workflows as a jobs/commands pipe:
+# cmd1 -p1 lorem | cmd2 -foo bar | ... | cmdN)
+#
+
+workflows:
+  test_feature_branches:
+    jobs:
+      - detect-secrets:
+          filters:
+            branches:
+              ignore:
+                - main
+                - beta
+      - setup:
+          requires:
+            - detect-secrets
+      - test:
+          requires:
+            - setup
+
+  release_@beta:
+    jobs:
+      - detect-secrets:
+          filters:
+            branches:
+              only:
+                - beta
+      - setup:
+          requires:
+            - detect-secrets
+      - test:
+          requires:
+            - setup
+      - submit-coverage:
+          requires:
+            - test
+          context:
+            - "UIKit - CodeClimate"
+      - release-npm:
+          requires:
+            - test
+          context:
+            - "UIKit - GitHub"
+      - build-ladle:
+          requires:
+            - test
+      - deploy-ladle:
+          requires:
+            - build-ladle
+          context:
+            - "UIKit - AWS @beta"
+
+  release_@latest:
+    jobs:
+      - detect-secrets:
+          filters:
+            branches:
+              only:
+                - main
+      - setup:
+          requires:
+            - detect-secrets
+      - test:
+          requires:
+            - setup
+      - submit-coverage:
+          requires:
+            - test
+          context:
+            - "UIKit - CodeClimate"
+      - release-npm:
+          requires:
+            - test
+          context:
+            - "UIKit - GitHub"
+      - build-ladle:
+          requires:
+            - test
+      - deploy-ladle:
+          requires:
+            - build-ladle
+          context:
+            - "UIKit - AWS @production"

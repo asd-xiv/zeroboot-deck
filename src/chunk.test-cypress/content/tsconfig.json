@@ -1,0 +1,10 @@
+{
+  "include": ["src", "*.config.js"],
+  "compilerOptions": {
+    "strict": true,
+    "allowJs": true,
+    "incremental": true,
+    "esModuleInterop": true,
+    "types": ["cypress", "@testing-library/cypress"]
+  }
+}

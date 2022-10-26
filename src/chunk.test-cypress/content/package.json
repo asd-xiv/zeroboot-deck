@@ -1,0 +1,47 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "description": "Cypress E2E tests",
+  "private": true,
+  "scripts": {
+    "----UTIL": "",
+    "format": "eslint --fix .",
+    "----LINT": "",
+    "lint.js": "eslint --quiet .",
+    "lint.cucumber": "gherkin-lint src/**/*.feature",
+    "lint": "npm run lint.cucumber && npm run lint.js",
+    "----DEVELOP": "",
+    "start": "cypress open",
+    "----TEST": "",
+    "test": "cypress run --headed --config video=false,screenshotOnRunFailure=false",
+    "test.ci": "cypress run --reporter junit --reporter-options mochaFile=test_reports/e2e/result-[hash].xml,toConsole=true"
+  },
+  "lint-staged": {
+    "*.feature": [
+      "gherkin-lint"
+    ],
+    ".md": [
+      "markdownlint"
+    ]
+  },
+  "dependencies": {
+    "@cypress/webpack-preprocessor": "^5.11.1",
+    "@swc/helpers": "^0.3.13",
+    "@testing-library/cypress": "^8.0.2",
+    "cypress": "^9.6.1",
+    "cypress-cucumber-preprocessor": "^4.3.1",
+    "cypress-dotenv": "^2.0.0",
+    "dotenv": "^16.0.0",
+    "rambda": "^7.1.4"
+  },
+  "devDependencies": {
+    "@types/cypress-cucumber-preprocessor": "^4.0.1",
+    "@types/cypress-dotenv": "^2.0.0",
+    "gherkin-lint": "^4.2.2",
+    "node-polyfill-webpack-plugin": "1.1.4"
+  },
+  "cypress-cucumber-preprocessor": {
+    "nonGlobalStepDefinitions": true,
+    "commonPath": "src/core.steps"
+  }
+}

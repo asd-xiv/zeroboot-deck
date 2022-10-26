@@ -1,0 +1,12 @@
+{
+  "include": ["src"],
+  "exclude": ["**/node_modules", "**/content"],
+  "compilerOptions": {
+    "module": "node16",
+    "allowJs": true,
+    "checkJs": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "incremental": true
+  }
+}

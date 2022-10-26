@@ -1,0 +1,13 @@
+#!/bin/sh
+
+##
+## Allow branch names that conforms to naming convention
+##
+
+branchName=$(git rev-parse --abbrev-ref HEAD)
+branchNameRegExp="^((beta|main)|(feat|fix|docs|refactor|test)\/[a-z0-9-]+)$"
+
+if [ ! "$branchName" =~ $branchNameRegExp ]; then
+    echo "There is something wrong with your branch name. Branch names in this project must adhere to this contract: $branchNameRegExp. Your commit will be rejected. You should rename your branch to a valid name and try again."
+    exit 1
+fi
