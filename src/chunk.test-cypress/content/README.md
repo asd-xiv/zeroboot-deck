@@ -2,11 +2,12 @@
 
 > The more your tests resemble the way your software is used, the more
 > confidence they can give you.  
-> [:bird: Kent C. Dodds][1-kentcdodds-quote]
+> [:bird: Kent C. Dodds][intro_kentcdodds-quote]
 
 ![Cypress + Cucumber](docs/preview.png)
 
-[1-kentcdodds-quote]: https://twitter.com/kentcdodds/status/977018512689455106
+[intro_kentcdodds-quote]:
+  https://twitter.com/kentcdodds/status/977018512689455106
 
 ## Table of contents
 
@@ -22,15 +23,20 @@
 
 ## Stack
 
-- [Cypress](https://www.cypress.io/) - Fast, easy and reliable testing for
-  anything that runs in a browser.
-- [Cucumber](https://github.com/TheBrainFamily/cypress-cucumber-preprocessor) -
-  Add support for
-  [Cucumber Gherkin syntax](https://cucumber.io/docs/gherkin/reference) when
-  writing Cypress tests.
-- [Cypress Testing Library](https://testing-library.com/docs/cypress-testing-library/intro) -
-  Cypress Testing Library allows the use of dom-testing queries within Cypress
-  end-to-end browser tests.
+- [Cypress][stack_cypress] - Fast, easy and reliable testing for anything that
+  runs in a browser.
+- [Cucumber][stack_cucumber] - Add support for [Cucumber Gherkin
+  syntax][stack_gherkin-syntax] when writing Cypress tests.
+- [Cypress Testing Library][stack_cypress-testing-library] - Cypress Testing
+  Library allows the use of dom-testing queries within Cypress end-to-end
+  browser tests.
+
+[stack_cypress]: https://www.cypress.io
+[stack_cucumber]:
+  https://github.com/TheBrainFamily/cypress-cucumber-preprocessor
+[stack_gherkin-syntax]: https://cucumber.io/docs/gherkin/reference
+[stack_cypress-testing-library]:
+  https://testing-library.com/docs/cypress-testing-library/intro
 
 ## Folder structure
 
@@ -46,7 +52,9 @@
 ### Local
 
 Copy and rename `.env.template` to `.env`. Variables get picked up by
-[`cypress-dotenv`](https://github.com/morficus/cypress-dotenv).
+[`cypress-dotenv`][local_cypress-dotenv].
+
+[local_cypress-dotenv]: https://github.com/morficus/cypress-dotenv
 
 ## Scripts
 

@@ -25,7 +25,7 @@
     "format": "prettier --write --prose-wrap=always .",
     "----LINT": "",
     "lint.js": "eslint src",
-    "lint.md": "markdownlint '*.md' 'src/**/*.md'",
+    "lint.md": "markdownlint '*.md'",
     "lint": "npm run lint.js && npm run lint.md",
     "typecheck": "tsc --pretty --noEmit"
   },
