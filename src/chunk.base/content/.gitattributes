@@ -1,0 +1,14 @@
+# Automatically normalize line endings for all text-based files
+#
+# https://git-scm.com/docs/gitattributes#_end_of_line_conversion
+# https://medium.com/@csmunuku/windows-and-linux-eol-sequence-configure-vs-code-and-git-37be98ef71df
+
+* text=auto eol=lf
+
+# For binary file types, prevent converting CRLF chars
+
+*.jpg		binary
+*.jpeg	binary
+*.gif		binary
+*.png   binary
+*.pdf   binary
