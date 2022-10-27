@@ -1,7 +1,4 @@
-#!/bin/sh
-
-# Exit script if any statement returns a non-true return value
-set -e
+#!/bin/sh -e
 
 npm run typecheck
 npm run lint

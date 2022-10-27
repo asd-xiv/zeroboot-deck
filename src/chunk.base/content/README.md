@@ -1,1 +1,1 @@
-# <%= packageName %>
+# <%= friendlyName %>

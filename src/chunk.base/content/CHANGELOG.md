@@ -7,4 +7,4 @@
 
 [semantic-release-repo]: https://github.com/semantic-release/semantic-release
 [cc-website]: https://www.conventionalcommits.org
-[pgk-release-page]: https://github.com/<%= packageName %>/releases
+[pgk-release-page]: https://github.com/<%= gitAddress %>/releases

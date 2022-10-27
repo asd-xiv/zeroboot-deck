@@ -1,6 +1,13 @@
 const parameters = /** @type {const} */ ({
-  packageName: {
+  friendlyName: {
     type: "input",
+    message: "What is the name of your package?",
+    default: "New Zerobooted project",
+  },
+  gitAddress: {
+    type: "input",
+    message: "What is the git address?",
+    default: "asd-xiv/name",
   },
 })
 

@@ -26,7 +26,7 @@ node_modules/
 .tern-port
 
 # Typescript
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # Vim ctags
 tags
