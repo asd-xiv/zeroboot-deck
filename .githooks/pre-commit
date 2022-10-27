@@ -1,13 +1,11 @@
-#!/bin/sh
+#!/bin/bash -e
 
-##
-## Allow branch names that conforms to naming convention
-##
+# Guard for branch name naming convention
 
 branchName=$(git rev-parse --abbrev-ref HEAD)
-branchNameRegExp="^((beta|main)|(feat|fix|docs|refactor|test)\/[a-z0-9-]+)$"
+branchNameRegExp="^((main|next)|(feat|fix|docs|refactor|test)\/[a-z0-9-]+)$"
 
-if [ ! "$branchName" =~ $branchNameRegExp ]; then
-    echo "There is something wrong with your branch name. Branch names in this project must adhere to this contract: $branchNameRegExp. Your commit will be rejected. You should rename your branch to a valid name and try again."
-    exit 1
+if [[ ! $branchName =~ $branchNameRegExp ]]; then
+  printf "There is something wrong with your branch name \e[31m\"%s\"\e[0m.\nBranch names in this project must adhere to this contract:\n\e[32m%s\e[0m\n\nYour commit will be rejected. You should rename your branch to a valid name and try again.\n" "$branchName" "$branchNameRegExp"
+  exit 1
 fi
