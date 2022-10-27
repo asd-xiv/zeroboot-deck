@@ -1,12 +1,15 @@
 #!/bin/sh
 
+scriptDir=$(dirname "$0")
+scriptName=$(basename "${BASH_SOURCE[0]}")
+
 ##
-## Manual
+## Help docs
 ##
 
 outputHelp() {
   echo "SYNTAX"
-  echo "  " $(basename ${BASH_SOURCE[0]}) "[-h] [-b BUCKET_NAME]"
+  echo "  " "$scriptName" "[-h] [-b BUCKET_NAME]"
   echo ""
   echo "DESCRIPTION"
   echo "  Generate an S3 Bucket Policy allowing access only to IP addresses listed in"
@@ -40,10 +43,7 @@ while getopts "hb:" option; do
   esac
 done
 
-scriptDir=$(dirname $0)
-
-ipCSV=$(cat "$scriptDir/../IP_WHITELIST" \
-  | grep -Ev "^#|^$" \
+ipCSV=$(grep -Ev "^#|^$" < "$scriptDir/../IP_WHITELIST" \
   | awk '{ print "\"" $1 "\""; }' \
   | paste -s -d ","
 )

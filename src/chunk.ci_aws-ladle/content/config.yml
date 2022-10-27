@@ -26,9 +26,9 @@ executors:
   gitleaks:
     docker:
       - image: zricethezav/gitleaks:latest
-  node:
+  node-lts:
     docker:
-      - image: cimg/node:lts
+      - image: cimg/node:16.17
   aws:
     docker:
       - image: amazon/aws-cli:latest
@@ -52,7 +52,7 @@ jobs:
             gitleaks detect --redact --verbose --config .circleci/gitleaks.toml
 
   setup:
-    executor: node
+    executor: node-lts
     working_directory: *JOB_WORKING_DIR
     steps:
       - checkout
@@ -82,7 +82,7 @@ jobs:
             - .npmrc
 
   test:
-    executor: node
+    executor: node-lts
     working_directory: *JOB_WORKING_DIR
     steps:
       - attach_workspace:
@@ -101,7 +101,7 @@ jobs:
             npm run coverage
 
   submit-coverage:
-    executor: node
+    executor: node-lts
     working_directory: *JOB_WORKING_DIR
     steps:
       - attach_workspace:
@@ -119,7 +119,7 @@ jobs:
             ./cc-test-reporter after-build --coverage-input-type lcov --exit-code $?
 
   release-npm:
-    executor: node
+    executor: node-lts
     working_directory: *JOB_WORKING_DIR
     steps:
       - attach_workspace:
@@ -136,7 +136,7 @@ jobs:
             npm run release
 
   build-ladle:
-    executor: node
+    executor: node-lts
     working_directory: *JOB_WORKING_DIR
     steps:
       - attach_workspace:
@@ -227,12 +227,12 @@ workflows:
           requires:
             - test
           context:
-            - "UIKit - CodeClimate"
+            - "<%= friendlyPackageName %> - CodeClimate"
       - release-npm:
           requires:
             - test
           context:
-            - "UIKit - GitHub"
+            - "<%= friendlyPackageName %> - GitHub"
       - build-ladle:
           requires:
             - test
@@ -240,7 +240,7 @@ workflows:
           requires:
             - build-ladle
           context:
-            - "UIKit - AWS @beta"
+            - "<%= friendlyPackageName %> - AWS @beta"
 
   release_@latest:
     jobs:
@@ -259,12 +259,12 @@ workflows:
           requires:
             - test
           context:
-            - "UIKit - CodeClimate"
+            - "<%= friendlyPackageName %> - CodeClimate"
       - release-npm:
           requires:
             - test
           context:
-            - "UIKit - GitHub"
+            - "<%= friendlyPackageName %> - GitHub"
       - build-ladle:
           requires:
             - test
@@ -272,4 +272,4 @@ workflows:
           requires:
             - build-ladle
           context:
-            - "UIKit - AWS @production"
+            - "<%= friendlyPackageName %> - AWS @production"
