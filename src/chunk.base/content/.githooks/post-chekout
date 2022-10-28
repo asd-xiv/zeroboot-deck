@@ -1,3 +1,12 @@
 #!/bin/sh -e
 
-npm install --no-audit --progress=false
+# Reinstall dependencies only if package-lock.json changed
+
+packageLockChanged=$(\
+  git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD \
+    | grep -c "package-lock.json" \
+)
+
+if [ "$packageLockChanged" != "0" ]; then
+  npm install --no-audit --progress=false
+fi
