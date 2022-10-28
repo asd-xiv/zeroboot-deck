@@ -2,7 +2,7 @@
   "name": "@asd14/zeroboot-stacks",
   "version": "0.1.0",
   "description": "",
-  "license": "MIT",
+  "license" : "BSD-3-Clause",
   "homepage": "https://github.com/asd-xiv/zeroboot-stacks",
   "author": {
     "name": "Andrei Dumitrescu",
