@@ -6,12 +6,15 @@ if [ -n "$CI" ]; then
   exit 0
 fi
 
-# Remove comments from git commit message to not trigger [body-max-line-length]
-commitMessage=$(sed '/^#/d' < "$1")
+# Remove comments from commit message to avoid [body-max-line-length]
+# false positives.
+message=$(sed '/^#/d' < "$1")
 
-if [ -z "$commitMessage" ]; then
+if [ -z "$message" ]; then
   echo "Aborting commitlint validation due to empty commit message."
+
+  # Exit without error code to allow git to decide what to do.
   exit 0
 fi
 
-echo "$commitMessage" | npx --no-install commitlint
+echo "$message" | npx --no-install commitlint
