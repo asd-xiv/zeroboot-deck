@@ -1,5 +1,5 @@
 {
   "name": "Zeroboot",
   "chunks": ["src/chunk.*/chunk.js"],
-  "stacks": ["src/stack.*/stack.js"],
+  "stacks": ["src/stack.*/stack.js"]
 }
