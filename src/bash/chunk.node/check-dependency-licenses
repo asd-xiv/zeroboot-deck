@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2155
+
+display_help() {
+  local name=$(basename "$0")
+
+  cat << EOF
+NAME
+  $name - Checks the licenses of a project's npm dependencies and ensures they meet the allowed licenses criteria.
+
+SYNOPSIS
+  $name [OPTION]...
+
+OPTIONS
+  -d, --also-dev
+    Also check packages in devDependencies
+
+  -l, --license
+    Allowed licenses, comma separated
+    Default: MIT,Unlicense,Apache-2.0,BSD-2-Clause,BSD-3-Clause,CC0-1.0,ISC
+
+  -h, --help
+    Display this help message
+
+DEPENDENCIES
+  jq
+
+AUTHOR
+  Written by
+    Andrei Dumitrescu - https://github.com/andreidmt
+EOF
+}
+
+ALLOWED_LICENSES="MIT,Unlicense,Apache-2.0,BSD-2-Clause,BSD-3-Clause,CC0-1.0,ISC"
+INCLUDE_DEV=false
+
+parse_arguments() {
+  while :; do
+    case $1 in
+      -d|--also-dev)
+        INCLUDE_DEV=true
+      ;;
+      -l|--license)
+        if [ "$2" ]; then
+          ALLOWED_LICENSES="$2"
+          shift
+        else
+          echo 'ERROR: "--license" requires a non-empty option argument.' >&2
+          exit 1
+        fi
+      ;;
+      -h|--help)
+        display_help; exit
+      ;;
+      --) shift; break ;;
+      -?*)
+        echo "Error: Unknown argument $1" >&2
+        display_help;
+        exit 1
+      ;;
+      *) break ;;
+    esac
+    shift
+  done
+}
+
+echo_bold() {
+  if [ "$CI" == "true" ]; then
+    echo -e "$1"
+  else
+    echo -e "\033[1m$1\033[0m"
+  fi
+}
+
+echo_red() {
+  if [ "$CI" == "true" ]; then
+    echo -e "$1"
+  else
+    echo -e "\033[0;31m$1\033[0m"
+  fi
+}
+
+echo_green() {
+  if [ "$CI" == "true" ]; then
+    echo -e "$1"
+  else
+    echo -e "\033[0;32m$1\033[0m"
+  fi
+}
+
+display_allowed_licenses() {
+  echo_bold "Allowed licenses:"
+  local licenses_list=$(echo "$1" | tr "," "\n")
+
+  for license in $licenses_list; do
+    echo " - $license"
+  done
+}
+
+is_allowed_license() {
+  local license_to_check="$1"
+  local allowed_licenses_list=$(echo "$2" | tr "," "\n")
+
+  for allowed_license in $allowed_licenses_list; do
+    if [ "$license_to_check" == "$allowed_license" ]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+display_status() {
+  local dependency_info="$1"
+  local status_code="$2"
+  local name=$(echo "$dependency_info" | jq -r '.name // ""')
+  local version=$(echo "$dependency_info" | jq -r '.version // ""')
+  local license=$(echo "$dependency_info" | jq -r '.license // ""')
+  local url=$(echo "$dependency_info" | jq -r '.homepage // ""')
+
+  if [ "$status_code" -eq 0 ]; then
+    echo " - $name@$version, $(echo_green "✔ $license")"
+  else
+    echo " - $name@$version, $(echo_red "✖ $license")" >&2
+    echo "   - URL: $url" >&2
+  fi
+}
+
+check_dependency_licenses() {
+  local title="$1"
+  local dependencies_list=$(echo "$2" | tr " " "\n")
+  local has_failed=0
+
+  echo_bold "\n$title"
+
+  for package_name in $dependencies_list; do
+    local package_json="./node_modules/$package_name/package.json"
+    local base_info=$(jq '. | { name, version, license, repository, homepage }' "$package_json")
+    local license=$(echo "$base_info" | jq -r '.license // ""')
+
+    if is_allowed_license "$license" "$ALLOWED_LICENSES"; then
+      display_status "$base_info" 0
+    else
+      display_status "$base_info" 1
+      has_failed=1
+    fi
+  done
+
+  return $has_failed
+}
+
+##
+## Main
+##
+
+if [ ! -f package.json ]; then
+  echo_red "✖ No package.json found in the current directory" >&2
+  pwd >&2
+  exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo_red "✖ jq is not installed" >&2
+  exit 1
+fi
+
+parse_arguments "$@"
+display_allowed_licenses "$ALLOWED_LICENSES"
+
+dependencies=$(jq -r '.dependencies | keys[]' package.json)
+check_dependency_licenses "Dependencies" "$dependencies"
+dep_status=$?
+
+if [ "$INCLUDE_DEV" == "true" ]; then
+  devDependencies="$(jq -r '.devDependencies | keys[]' package.json)"
+  check_dependency_licenses "Development dependencies" "$devDependencies"
+  dev_dep_status=$?
+fi
+
+if [ "$dep_status" -eq 0 ] && [ "${dev_dep_status:-0}" -eq 0 ]; then
+  echo_green "\n✔ All dependencies meet license requirements"
+else
+  echo_red "\n✖ Some dependencies do not meet license requirements" >&2
+  exit 1
+fi

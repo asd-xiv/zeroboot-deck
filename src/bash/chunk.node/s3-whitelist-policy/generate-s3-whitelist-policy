@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+
+# shellcheck disable=SC2155
+
+display_help() {
+  local name=$(basename "$0")
+
+  cat << EOF
+NAME
+  $name - Generate an S3 Bucket Policy allowing access only to IP addresses listed in IP_WHITELIST file
+
+SYNOPSIS
+  $name [-h] [-b BUCKET_NAME] [-w WHITELIST_FILE]
+
+OPTIONS
+  -b, --bucket BUCKET_NAME
+    S3 Bucket name the policy is generated for
+
+  -w, --whitelist WHITELIST_FILE
+    Path to the IP_WHITELIST file
+
+  -h, --help
+    Print this help and exit
+
+AUTHOR
+  Written by
+    Andrei Dumitrescu - https://github.com/andreidmt
+EOF
+}
+
+parse_arguments() {
+  while :; do
+    case $1 in
+      -b|--bucket)
+        if [ "$2" ]; then
+          BUCKET_NAME=$2
+          shift
+        else
+          die 'ERROR: "--bucket" requires a non-empty option argument.'
+        fi
+      ;;
+      -w|--whitelist)
+        if [ "$2" ]; then
+          WHITELIST_FILE=$2
+          shift
+        else
+          die 'ERROR: "--whitelist" requires a non-empty option argument.'
+        fi
+      ;;
+      -h|--help)
+        outputHelp
+        exit
+      ;;
+      --) shift; break ;;
+      -?*) echo "WARN: Unknown option (ignored): $1" >&2 ;;
+      *) break ;;
+    esac
+    shift
+  done
+}
+
+##
+## Main
+##
+
+parse_arguments "$@"
+
+if [ -z "$BUCKET_NAME" ]; then
+  echo "ERROR: Bucket name is required"
+  outputHelp
+  exit 1
+fi
+
+if [ -z "$WHITELIST_FILE" ]; then
+  echo "ERROR: Whitelist file path is required"
+  outputHelp
+  exit 1
+fi
+
+ipCSV=$(grep -Ev "^#|^$" < "$WHITELIST_FILE" \
+  | awk '{ print "\"" $1 "\""; }' \
+  | paste -s -d ","
+)
+
+echo "{
+	\"Version\": \"2012-10-17\",
+	\"Id\": \"PolicyId2\",
+	\"Statement\": [
+		{
+			\"Effect\": \"Allow\",
+			\"Principal\": \"*\",
+			\"Action\": [
+				\"s3:GetObject\",
+				\"s3:ListBucket\"
+			],
+			\"Resource\": [
+				\"arn:aws:s3:::${BUCKET_NAME}\",
+				\"arn:aws:s3:::${BUCKET_NAME}/*\"
+			],
+			\"Condition\": {
+				\"IpAddress\": {
+					\"aws:SourceIp\": [${ipCSV}]
+				}
+			}
+		}
+	]
+}" > s3-policy.json
