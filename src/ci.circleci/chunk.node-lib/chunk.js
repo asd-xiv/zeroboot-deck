@@ -8,8 +8,8 @@ const parameters = /** @type {const} */ ({
 
 /** @type { import("@asd14/zeroboot").Chunk<typeof parameters> } */
 export default {
-  name: "CI",
-  description: "CI/CD configuration using CircleCI, deploying a package to NPM",
+  name: "ci.circleci_node-lib",
+  description: "CircleCI configuration for deploying a package to NPM",
   parameters,
   contentMapping: {},
 }
